@@ -14,6 +14,7 @@ import { recipeGenerationPrompt } from "@/lib/server/prompts";
 
 export async function POST(request: Request) {
   try {
+    const requestApiKey = request.headers.get("x-anthropic-api-key");
     const payload = await request.json();
     const parsedRequest = generateRecipesRequestSchema.safeParse(payload);
     if (!parsedRequest.success) {
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const client = getAnthropicClient();
+    const client = getAnthropicClient({ requestApiKey });
     const completion = await client.messages.create({
       model: getAnthropicModel(),
       max_tokens: 1800,

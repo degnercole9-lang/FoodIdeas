@@ -20,6 +20,7 @@ const maxImageBytes = 6 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
+    const requestApiKey = request.headers.get("x-anthropic-api-key");
     const formData = await request.formData();
     const imageCandidates = formData.getAll("images");
 
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
       }),
     );
 
-    const client = getAnthropicClient();
+    const client = getAnthropicClient({ requestApiKey });
     const completion = await client.messages.create({
       model: getAnthropicModel(),
       max_tokens: 1200,

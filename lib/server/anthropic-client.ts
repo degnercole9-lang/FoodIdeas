@@ -11,21 +11,39 @@ const apiKeyEnvNames = [
   "NEXT_PUBLIC_ANTHROPIC_API_KEY",
 ] as const;
 
-function readAnthropicApiKey(): string | null {
+function sanitizeApiKey(value: string | null | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function readAnthropicApiKeyFromEnv(): string | null {
   for (const envName of apiKeyEnvNames) {
-    const value = process.env[envName];
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
+    const value = sanitizeApiKey(process.env[envName]);
+    if (value) {
+      return value;
     }
   }
   return null;
 }
 
-export function getAnthropicClient(): Anthropic {
-  const apiKey = readAnthropicApiKey();
+function readAnthropicApiKey(requestApiKey?: string | null): string | null {
+  const override = sanitizeApiKey(requestApiKey);
+  if (override) {
+    return override;
+  }
+  return readAnthropicApiKeyFromEnv();
+}
+
+export function getAnthropicClient(options?: {
+  requestApiKey?: string | null;
+}): Anthropic {
+  const apiKey = readAnthropicApiKey(options?.requestApiKey);
   if (!apiKey) {
     throw new Error(
-      "Missing Anthropic API key. Set ANTHROPIC_API_KEY (or ATHNROPIC_API_KEY in existing preview configs).",
+      "Missing Anthropic API key. Set ANTHROPIC_API_KEY (or provide key in preview input).",
     );
   }
   return new Anthropic({ apiKey });

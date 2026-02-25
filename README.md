@@ -57,6 +57,12 @@ pnpm build
 - Only `main` is production-eligible.
 - Agents do not deploy unless explicitly instructed.
 
+## Preview Troubleshooting
+
+- If preview env vars are not configured yet, you can use the in-app
+  **Preview API key override** panel (stored only in your browser) to test.
+- For shared usage by all visitors, configure `ANTHROPIC_API_KEY` in Vercel.
+
 ## Task Artifacts
 
 - Deployment backlog: `ops/tasks/deployment-backlog.md`
