@@ -557,7 +557,7 @@ export function MealCaptureFlow() {
                 {ingredients.map((ingredient) => (
                   <div
                     key={ingredient.id}
-                    className="grid grid-cols-[1fr_84px_80px_36px] gap-2"
+                    className="grid grid-cols-2 gap-2 md:grid-cols-[minmax(0,1fr)_84px_80px_36px]"
                   >
                     <input
                       value={ingredient.name}
@@ -567,7 +567,7 @@ export function MealCaptureFlow() {
                         })
                       }
                       placeholder="Ingredient"
-                      className="rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm outline-none ring-0 placeholder:text-white/40 focus:border-[#f1b24a]"
+                      className="col-span-2 min-w-0 rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm outline-none ring-0 placeholder:text-white/40 focus:border-[#f1b24a] md:col-span-1"
                     />
                     <input
                       value={ingredient.quantityText}
@@ -578,7 +578,7 @@ export function MealCaptureFlow() {
                         })
                       }
                       placeholder="Qty"
-                      className="rounded-xl border border-white/15 bg-black/25 px-2 py-2 text-sm outline-none ring-0 placeholder:text-white/40 focus:border-[#f1b24a]"
+                      className="min-w-0 rounded-xl border border-white/15 bg-black/25 px-2 py-2 text-sm outline-none ring-0 placeholder:text-white/40 focus:border-[#f1b24a]"
                     />
                     <input
                       value={ingredient.unit}
@@ -588,12 +588,12 @@ export function MealCaptureFlow() {
                         })
                       }
                       placeholder="Unit"
-                      className="rounded-xl border border-white/15 bg-black/25 px-2 py-2 text-sm outline-none ring-0 placeholder:text-white/40 focus:border-[#f1b24a]"
+                      className="min-w-0 rounded-xl border border-white/15 bg-black/25 px-2 py-2 text-sm outline-none ring-0 placeholder:text-white/40 focus:border-[#f1b24a]"
                     />
                     <button
                       type="button"
                       onClick={() => removeIngredient(ingredient.id)}
-                      className="rounded-xl border border-white/20 bg-black/40 text-xs font-semibold text-white/80 hover:bg-black/60"
+                      className="col-span-2 rounded-xl border border-white/20 bg-black/40 px-3 py-2 text-xs font-semibold text-white/80 hover:bg-black/60 md:col-span-1 md:px-0 md:py-0"
                     >
                       ✕
                     </button>
