@@ -66,22 +66,6 @@ export function getAnthropicModel(): string {
   return process.env.ANTHROPIC_MODEL ?? defaultModel;
 }
 
-export function fileToAnthropicImage(
-  fileName: string,
-  mediaType: string,
-  base64Data: string,
-) {
-  return {
-    type: "image" as const,
-    source: {
-      type: "base64" as const,
-      media_type: mediaType as "image/jpeg" | "image/png" | "image/webp",
-      data: base64Data,
-    },
-    name: fileName,
-  };
-}
-
 export function toBase64(arrayBuffer: ArrayBuffer): string {
   return Buffer.from(arrayBuffer).toString("base64");
 }

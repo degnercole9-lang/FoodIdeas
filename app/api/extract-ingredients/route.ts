@@ -7,11 +7,11 @@ import {
   extractIngredientsResponseSchema,
 } from "@/lib/meal-models";
 import {
-  fileToAnthropicImage,
   getAnthropicClient,
   getAnthropicModel,
   toBase64,
 } from "@/lib/server/anthropic-client";
+import { fileToAnthropicImage } from "@/lib/server/anthropic-image";
 import { ingredientExtractionPrompt } from "@/lib/server/prompts";
 
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         const base64Data = toBase64(await file.arrayBuffer());
         return [
           { type: "text" as const, text: `Image ${index + 1}` },
-          fileToAnthropicImage(file.name, file.type, base64Data),
+          fileToAnthropicImage(file.type, base64Data),
         ];
       }),
     );
