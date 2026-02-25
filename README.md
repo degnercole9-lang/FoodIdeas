@@ -28,6 +28,9 @@ pnpm install
 cp .env.example .env.local
 ```
 
+Recommended model for this project:
+- `ANTHROPIC_MODEL=claude-haiku-4-5-20251001`
+
 3. Run the app:
 
 ```bash

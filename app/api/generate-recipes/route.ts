@@ -7,8 +7,8 @@ import {
   generateRecipesResponseSchema,
 } from "@/lib/meal-models";
 import {
+  createMessageWithModelFallback,
   getAnthropicClient,
-  getAnthropicModel,
 } from "@/lib/server/anthropic-client";
 import { recipeGenerationPrompt } from "@/lib/server/prompts";
 
@@ -25,8 +25,7 @@ export async function POST(request: Request) {
     }
 
     const client = getAnthropicClient({ requestApiKey });
-    const completion = await client.messages.create({
-      model: getAnthropicModel(),
+    const completion = await createMessageWithModelFallback(client, {
       max_tokens: 1800,
       temperature: 0.3,
       messages: [

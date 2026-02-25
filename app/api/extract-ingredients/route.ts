@@ -7,8 +7,8 @@ import {
   extractIngredientsResponseSchema,
 } from "@/lib/meal-models";
 import {
+  createMessageWithModelFallback,
   getAnthropicClient,
-  getAnthropicModel,
   toBase64,
 } from "@/lib/server/anthropic-client";
 import { fileToAnthropicImage } from "@/lib/server/anthropic-image";
@@ -71,8 +71,7 @@ export async function POST(request: Request) {
     );
 
     const client = getAnthropicClient({ requestApiKey });
-    const completion = await client.messages.create({
-      model: getAnthropicModel(),
+    const completion = await createMessageWithModelFallback(client, {
       max_tokens: 1200,
       temperature: 0.1,
       messages: [

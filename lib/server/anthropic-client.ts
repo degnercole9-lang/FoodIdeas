@@ -2,7 +2,11 @@ import "server-only";
 
 import Anthropic from "@anthropic-ai/sdk";
 
-const defaultModel = "claude-3-5-haiku-latest";
+import {
+  getAnthropicModelCandidates,
+  isAnthropicModelNotFoundError,
+} from "@/lib/server/anthropic-model-fallback";
+
 const apiKeyEnvNames = [
   "ANTHROPIC_API_KEY",
   // Common typo fallback to reduce preview setup failures.
@@ -63,7 +67,42 @@ export function getAnthropicClient(options?: {
 }
 
 export function getAnthropicModel(): string {
-  return process.env.ANTHROPIC_MODEL ?? defaultModel;
+  const [firstCandidate] = getAnthropicModelCandidates(
+    process.env.ANTHROPIC_MODEL,
+  );
+  return firstCandidate;
+}
+
+export async function createMessageWithModelFallback(
+  client: Anthropic,
+  params: Omit<Anthropic.MessageCreateParamsNonStreaming, "model">,
+): Promise<Anthropic.Message> {
+  const candidates = getAnthropicModelCandidates(process.env.ANTHROPIC_MODEL);
+  let lastModelError: unknown = null;
+
+  for (const model of candidates) {
+    try {
+      return await client.messages.create({
+        ...params,
+        model,
+      });
+    } catch (error) {
+      if (isAnthropicModelNotFoundError(error)) {
+        lastModelError = error;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  const attemptedModels = candidates.join(", ");
+  const reason =
+    lastModelError instanceof Error
+      ? lastModelError.message
+      : "All candidate models were rejected.";
+  throw new Error(
+    `No compatible Anthropic model found for this API key. Tried: ${attemptedModels}. Set ANTHROPIC_MODEL to a model available in your Anthropic account. Last error: ${reason}`,
+  );
 }
 
 export function toBase64(arrayBuffer: ArrayBuffer): string {
