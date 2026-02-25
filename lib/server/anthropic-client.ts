@@ -29,6 +29,19 @@ function readAnthropicApiKeyFromEnv(): string | null {
   return null;
 }
 
+export function getAnthropicEnvKeyStatus(): {
+  hasKey: boolean;
+  source: string | null;
+} {
+  for (const envName of apiKeyEnvNames) {
+    const value = sanitizeApiKey(process.env[envName]);
+    if (value) {
+      return { hasKey: true, source: envName };
+    }
+  }
+  return { hasKey: false, source: null };
+}
+
 function readAnthropicApiKey(requestApiKey?: string | null): string | null {
   const override = sanitizeApiKey(requestApiKey);
   if (override) {

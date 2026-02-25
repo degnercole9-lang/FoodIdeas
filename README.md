@@ -50,6 +50,10 @@ pnpm build
 - `POST /api/extract-ingredients`
 - `POST /api/generate-recipes`
 
+Health response includes:
+- `anthropic.hasServerKey` (`true` means this deployment can serve all devices without browser key override)
+- `anthropic.keySource` (which env name is being used)
+
 ## Manual Deploy Policy (Vercel via Git)
 
 - User performs deploy manually through Git + Vercel.
