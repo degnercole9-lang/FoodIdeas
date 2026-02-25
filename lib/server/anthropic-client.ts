@@ -2,12 +2,31 @@ import "server-only";
 
 import Anthropic from "@anthropic-ai/sdk";
 
-const defaultModel = "claude-3-5-sonnet-latest";
+const defaultModel = "claude-3-5-haiku-latest";
+const apiKeyEnvNames = [
+  "ANTHROPIC_API_KEY",
+  // Common typo fallback to reduce preview setup failures.
+  "ATHNROPIC_API_KEY",
+  // Optional fallback if entered as a public-prefixed key in preview config.
+  "NEXT_PUBLIC_ANTHROPIC_API_KEY",
+] as const;
+
+function readAnthropicApiKey(): string | null {
+  for (const envName of apiKeyEnvNames) {
+    const value = process.env[envName];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return null;
+}
 
 export function getAnthropicClient(): Anthropic {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = readAnthropicApiKey();
   if (!apiKey) {
-    throw new Error("Missing ANTHROPIC_API_KEY.");
+    throw new Error(
+      "Missing Anthropic API key. Set ANTHROPIC_API_KEY (or ATHNROPIC_API_KEY in existing preview configs).",
+    );
   }
   return new Anthropic({ apiKey });
 }
