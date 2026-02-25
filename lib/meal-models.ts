@@ -6,6 +6,7 @@ export const ingredientSchema = z.object({
   quantity: z.number().positive().optional(),
   unit: z.string().min(1).optional(),
   confidence: z.number().min(0).max(1).optional(),
+  evidence: z.string().min(1).optional(),
   sourceImageIndex: z.number().int().min(0).optional(),
 });
 
@@ -35,6 +36,19 @@ export const generateRecipesRequestSchema = z.object({
   ingredients: z.array(ingredientSchema).min(1),
 });
 
+export const ingredientVerificationSchema = z.object({
+  id: z.string().min(1).optional(),
+  name: z.string().min(1).optional(),
+  visible: z.boolean(),
+  confidence: z.number().min(0).max(1).optional(),
+  reason: z.string().min(1).optional(),
+});
+
+export const verifyIngredientsResponseSchema = z.object({
+  verifications: z.array(ingredientVerificationSchema).default([]),
+  warnings: z.array(z.string()).default([]),
+});
+
 export type Ingredient = z.infer<typeof ingredientSchema>;
 export type Recipe = z.infer<typeof recipeSchema>;
 export type ExtractIngredientsResponse = z.infer<
@@ -45,4 +59,10 @@ export type GenerateRecipesResponse = z.infer<
 >;
 export type GenerateRecipesRequest = z.infer<
   typeof generateRecipesRequestSchema
+>;
+export type IngredientVerification = z.infer<
+  typeof ingredientVerificationSchema
+>;
+export type VerifyIngredientsResponse = z.infer<
+  typeof verifyIngredientsResponseSchema
 >;

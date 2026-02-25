@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 
+import {
+  applyIngredientVerifications,
+  filterIngredientCandidates,
+} from "@/lib/ingredient-extraction-postprocess";
 import { normalizeIngredient } from "@/lib/ingredient-utils";
 import { parseJsonFromText } from "@/lib/json-response";
 import {
   type ExtractIngredientsResponse,
   extractIngredientsResponseSchema,
+  type VerifyIngredientsResponse,
+  verifyIngredientsResponseSchema,
 } from "@/lib/meal-models";
 import {
   createMessageWithModelFallback,
@@ -12,7 +18,10 @@ import {
   toBase64,
 } from "@/lib/server/anthropic-client";
 import { fileToAnthropicImage } from "@/lib/server/anthropic-image";
-import { ingredientExtractionPrompt } from "@/lib/server/prompts";
+import {
+  ingredientExtractionPrompt,
+  ingredientVerificationPrompt,
+} from "@/lib/server/prompts";
 
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const maxImageCount = 3;
@@ -99,11 +108,74 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedIngredients = parsed.data.ingredients.map((ingredient) =>
+      normalizeIngredient(ingredient),
+    );
+    const filtered = filterIngredientCandidates(normalizedIngredients);
+    let finalIngredients = filtered.ingredients;
+    const verificationWarnings: string[] = [];
+
+    if (filtered.ingredients.length > 0) {
+      const verificationCompletion = await createMessageWithModelFallback(
+        client,
+        {
+          max_tokens: 900,
+          temperature: 0,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: ingredientVerificationPrompt(
+                    filtered.ingredients.map((ingredient) => ({
+                      id: ingredient.id,
+                      name: ingredient.name,
+                    })),
+                  ),
+                },
+                ...imageBlocks.flat(),
+              ],
+            },
+          ],
+        },
+      );
+
+      const verificationText = verificationCompletion.content
+        .filter((block) => block.type === "text")
+        .map((block) => block.text)
+        .join("\n");
+      const verificationRaw =
+        parseJsonFromText<VerifyIngredientsResponse>(verificationText);
+      const parsedVerification =
+        verifyIngredientsResponseSchema.safeParse(verificationRaw);
+      if (parsedVerification.success) {
+        const verified = applyIngredientVerifications(
+          filtered.ingredients,
+          parsedVerification.data.verifications,
+        );
+        finalIngredients = verified.ingredients;
+        verificationWarnings.push(
+          ...parsedVerification.data.warnings,
+          ...verified.warnings,
+        );
+      } else {
+        verificationWarnings.push(
+          "Verification pass returned invalid format; using primary detections.",
+        );
+      }
+    }
+
     const response = {
       ...parsed.data,
-      ingredients: parsed.data.ingredients.map((ingredient) =>
+      ingredients: finalIngredients.map((ingredient) =>
         normalizeIngredient(ingredient),
       ),
+      warnings: [
+        ...parsed.data.warnings,
+        ...filtered.warnings,
+        ...verificationWarnings,
+      ],
     };
 
     return NextResponse.json(response);

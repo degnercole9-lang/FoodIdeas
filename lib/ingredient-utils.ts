@@ -21,6 +21,7 @@ export function normalizeIngredient(
     quantity: ingredient.quantity,
     unit: ingredient.unit,
     confidence: ingredient.confidence,
+    evidence: ingredient.evidence,
     sourceImageIndex: ingredient.sourceImageIndex,
   };
 }
