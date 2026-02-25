@@ -35,7 +35,6 @@ import {
 
 const MAX_PHOTOS = 3;
 const UNDO_TIMEOUT_MS = 5000;
-const previewApiKeyStorageKey = "foodideas:preview-anthropic-api-key";
 
 const stageOrder = {
   capture: 1,
@@ -158,9 +157,6 @@ export function MealCaptureFlow() {
   const [generateError, setGenerateError] = useState<string | null>(null);
 
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [previewApiKey, setPreviewApiKey] = useState("");
-  const [previewApiKeyInput, setPreviewApiKeyInput] = useState("");
-  const [showPreviewApiKeyInput, setShowPreviewApiKeyInput] = useState(false);
 
   const undoTimerRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -170,16 +166,6 @@ export function MealCaptureFlow() {
 
   useEffect(() => {
     setFavorites(readFavorites());
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const storedKey =
-      window.localStorage.getItem(previewApiKeyStorageKey) ?? "";
-    setPreviewApiKey(storedKey);
-    setPreviewApiKeyInput(storedKey);
   }, []);
 
   useEffect(() => {
@@ -358,9 +344,6 @@ export function MealCaptureFlow() {
 
       const response = await fetch("/api/extract-ingredients", {
         method: "POST",
-        headers: previewApiKey
-          ? { "x-anthropic-api-key": previewApiKey }
-          : undefined,
         body: formData,
       });
 
@@ -382,9 +365,6 @@ export function MealCaptureFlow() {
         error instanceof Error
           ? error.message
           : "Could not analyze photos. Enter ingredients manually.";
-      if (message.toLowerCase().includes("missing anthropic api key")) {
-        setShowPreviewApiKeyInput(true);
-      }
       setExtractError(message);
     } finally {
       setExtractLoading(false);
@@ -415,7 +395,6 @@ export function MealCaptureFlow() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(previewApiKey ? { "x-anthropic-api-key": previewApiKey } : {}),
         },
         body: JSON.stringify({ ingredients: payloadIngredients }),
       });
@@ -435,9 +414,6 @@ export function MealCaptureFlow() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to generate recipes.";
-      if (message.toLowerCase().includes("missing anthropic api key")) {
-        setShowPreviewApiKeyInput(true);
-      }
       setGenerateError(message);
     } finally {
       setGenerateLoading(false);
@@ -480,25 +456,6 @@ export function MealCaptureFlow() {
     });
   };
 
-  const savePreviewApiKey = () => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const trimmed = previewApiKeyInput.trim();
-    setPreviewApiKey(trimmed);
-    window.localStorage.setItem(previewApiKeyStorageKey, trimmed);
-    setShowPreviewApiKeyInput(false);
-  };
-
-  const clearPreviewApiKey = () => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    setPreviewApiKey("");
-    setPreviewApiKeyInput("");
-    window.localStorage.removeItem(previewApiKeyStorageKey);
-  };
-
   const hasReachedLimit = photos.length >= MAX_PHOTOS;
   const stageNumber = stageOrder[stage];
 
@@ -522,59 +479,6 @@ export function MealCaptureFlow() {
             recipe options.
           </p>
         </header>
-
-        <section className="mb-5 rounded-2xl border border-cyan-200/25 bg-cyan-200/10 p-3 text-sm text-cyan-100">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="font-semibold">Preview API key override</p>
-            <button
-              type="button"
-              onClick={() => setShowPreviewApiKeyInput((current) => !current)}
-              className="rounded-md border border-cyan-100/40 px-2 py-1 text-xs font-semibold uppercase tracking-wide hover:bg-cyan-100/10"
-            >
-              {showPreviewApiKeyInput ? "Hide" : "Show"}
-            </button>
-          </div>
-          <p className="mb-3 text-xs text-cyan-100/80">
-            Browser-only fallback for private preview. For all users, set
-            `ANTHROPIC_API_KEY` in Vercel environment settings.
-          </p>
-
-          {previewApiKey ? (
-            <p className="mb-3 text-xs text-cyan-100/90">
-              Stored key active in this browser.
-            </p>
-          ) : null}
-
-          {showPreviewApiKeyInput ? (
-            <div className="space-y-2">
-              <input
-                type="password"
-                value={previewApiKeyInput}
-                onChange={(event) =>
-                  setPreviewApiKeyInput(event.currentTarget.value)
-                }
-                placeholder="Paste Anthropic API key for this browser"
-                className="w-full rounded-lg border border-cyan-100/35 bg-black/25 px-3 py-2 text-sm text-cyan-50 outline-none placeholder:text-cyan-100/45 focus:border-cyan-100/70"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={savePreviewApiKey}
-                  className="rounded-lg border border-cyan-100/35 px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-cyan-100/10"
-                >
-                  Save key
-                </button>
-                <button
-                  type="button"
-                  onClick={clearPreviewApiKey}
-                  className="rounded-lg border border-cyan-100/35 px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-cyan-100/10"
-                >
-                  Clear key
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </section>
 
         {stage === "capture" ? (
           <section className="space-y-4">
